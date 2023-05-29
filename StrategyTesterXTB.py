@@ -97,12 +97,17 @@ class StrategyTesterXTB():
             title=title+f'| {attr} = {getattr(self, attr)}'
         title=title
         
+        
         df_plot=self.df_to_plot.dropna().copy()
+        
+        
         self.buy_signal_index=[]
         self.sell_signal_index=[]
         self.neutral_signal_index=[]
         
+        
         for i in range(len(df_plot)):
+            
             if i==0:
                 if df_plot['position'].iloc[1]==1:
                     if (df_plot['position'].iloc[i]==-1 or df_plot['position'].iloc[i]==0):
@@ -110,12 +115,16 @@ class StrategyTesterXTB():
                 if df_plot['position'].iloc[1]==-1:
                     if (df_plot['position'].iloc[i]==1 or df_plot['position'].iloc[i]==0):
                         self.buy_signal_index.append(df_plot.index[1])
+                    
+                
             else:
                 if df_plot['position'].iloc[i-1]==1:
                     if df_plot['position'].iloc[i]==-1:
                         self.sell_signal_index.append(df_plot.index[i])
                     if df_plot['position'].iloc[i]==0:
                         self.neutral_signal_index.append(df_plot.index[i])
+                    
+                    
                 if df_plot['position'].iloc[i-1]==-1:
                     if df_plot['position'].iloc[i]==1:
                         self.buy_signal_index.append(df_plot.index[i])
@@ -129,19 +138,25 @@ class StrategyTesterXTB():
                 
         self.buy_y=[df_plot['Low'].loc[idx]*0.9998 for idx in self.buy_signal_index]
         self.sell_y= [df_plot['High'].loc[idx]*1.0002 for idx in self.sell_signal_index] 
+                
         
         row_heights=[1.0]
         figure_height=600
+        
+        
         rows=max(self.plot_data.keys())
         
         if rows==2:
             figure_height=800
             row_heights=[0.7,0.3]
+        
         if rows==3:
             figure_height=1000
             row_heights=[0.6,0.2,0.2]
             
-        figure=make_subplots(rows=rows, cols=1, row_heights=row_heights)
+        
+        figure=make_subplots(rows=rows, cols=1, row_heights=row_heights,shared_xaxes=True,
+                    vertical_spacing=0.01)
         figure.update_layout(height=figure_height)
         figure.add_trace(go.Candlestick(x=df_plot.index,
                 open=df_plot['Open'],
@@ -149,22 +164,33 @@ class StrategyTesterXTB():
                 low=df_plot['Low'],
                 close=df_plot['Close'],
                 name='price'), row=1, col=1)
+        
         figure.append_trace(go.Scatter(x=self.buy_signal_index, y=self.buy_y, mode='markers', marker_symbol='arrow-up', marker_color='green', name='buy', marker_size=10), col=1, row=1)
         figure.append_trace(go.Scatter(x=self.sell_signal_index, y=self.sell_y, mode='markers', marker_symbol='arrow-down', marker_color='red', name='sell', marker_size=10), col=1, row=1)
+        
+        
         
         for k in self.plot_data.keys():
             for v in self.plot_data[k]:
                 figure.add_trace(go.Scatter(x=df_plot.index, 
                                                y=df_plot[v[0]],
                                                mode='lines',
-                                               name=v[0]), row=k, col=1)
+                                               name=v[0], marker_color=v[2]), row=k, col=1)
                 if v[1]!=None:
                     figure.add_hline(y=getattr(self,v[1]), row=k, col=1)
                
-        figure.update_layout(title=title, xaxis_rangeslider_visible=False)
+                
+            
+        figure.update_layout(title=title, xaxis_rangeslider_visible=False,  dragmode='drawopenpath',
+    newshape_line_color='black')
         figure.update_xaxes(rangebreaks=[dict(bounds=['sat', 'mon'])])
-        figure.show()
-        
+        figure.show(config={'modeBarButtonsToAdd':['drawline',
+                                        'drawopenpath',
+                                        'drawclosedpath',
+                                        'drawcircle',
+                                        'drawrect',
+                                        'eraseshape'
+                                       ]})
         
 
    
